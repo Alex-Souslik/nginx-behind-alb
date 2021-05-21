@@ -4,10 +4,10 @@ set -xe # e-exit on error, x-show executed command
 
 # objects created by script #
 colors=(red blue) # requeired colors
-alb_name='alex-alb' # name of to be created LB
+alb_name='alb' # name of to be created LB
 
 # objects already existing #
-bucket='alex-static-files' # contains color folders with html files
+bucket='static-files' # contains color folders with html files
 image_id='ami-077e31c4939f6a2f3' # Amazon Linux 2 x86_64
 i_profile='EC2' # has AmazonS3ReadOnlyAccess policy
 i_type='t2.micro' # the free one
@@ -78,7 +78,7 @@ for (( i=0; i<=${#color[@]}; i++ )); do # creation loop
         --vpc-id $vpc | jq -r '.TargetGroups[].TargetGroupArn'`) # create tg per color
     instances+=(`aws ec2 run-instances  --instance-type $i_type --count 1 --image-id $image_id \
         --iam-instance-profile Name="$i_profile"  --security-group-ids $sg --user-data file://${colors[$i]}.sh  \
-        --subnet-id ${subnets[$i]} --key-name nginxKey | jq -r '.Instances[].InstanceId'`)  # each instance will be in a different subnet
+        --subnet-id ${subnets[$i]} | jq -r '.Instances[].InstanceId'`)  # each instance will be in a different subnet
     states+=(`aws ec2 describe-instance-status --instance-id ${instances[$i]} | jq -r '.InstanceStatuses[].InstanceState.Name'`)
     rm -f ${colors[$i]}.sh # done with user-data script
 done
